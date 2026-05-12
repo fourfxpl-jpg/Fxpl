@@ -3,13 +3,14 @@ session_start(); // ← เพิ่มบรรทัดนี้
 include 'db.php';
 // --- ข้อมูลจาก Discord Developer Portal ---
 // 1. ตรวจสอบว่า Client ID ตรงกับในหน้าเว็บ Discord หรือไม่
-$client_id     = '1490948398889828362';
+$client_id     = '1491008763581304852';
 
 // 2. แนะนำให้กด "Reset Secret" ใน Discord Portal แล้วเอารหัสใหม่มาใส่ตรงนี้
 $client_secret = 'h1CQbm4H6tTP_8QC4vpZtSXQQTVIM4P-'; 
 
 // 3. แก้บรรทัดนี้ให้ตรงกับ Domain ที่คุณใช้อยู่ (fxpl-production)
-$redirect_uri = 'https://fxpl-q7ii.onrender.com/login.php';
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$redirect_uri = $protocol . $_SERVER['HTTP_HOST'] . '/login.php';
 
 $guild_id      = '1462409196602396830'; 
 // ฟังก์ชันสำหรับส่งข้อมูลไปหา Discord API
