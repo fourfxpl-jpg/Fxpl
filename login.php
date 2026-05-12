@@ -3,17 +3,14 @@ session_start();
 include 'db.php';
 
 // --- ข้อมูลจาก Discord Developer Portal ---
-// ใช้ Client ID จาก Discord Portal จริงๆ
 $client_id     = '1491008763581304852';
-
-// ⚠️ ควรเก็บ Client Secret ใน Environment Variable ไม่ใส่ตรงนี้
 $client_secret = getenv('DISCORD_CLIENT_SECRET') ?: 'h1CQbm4H6tTP_8QC4vpZtSXQQTVIM4P-'; 
 
-// ใช้ URL อัตโนมัติ ไม่ต้องแก้ทุกครั้ง
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-$redirect_uri = $protocol . $_SERVER['HTTP_HOST'] . '/login.php';
+// ✅ บังคับใช้ https เสมอ (แก้ปัญหา Render ใช้ http)
+$redirect_uri = 'https://' . $_SERVER['HTTP_HOST'] . '/login.php';
 
 $guild_id      = '1462409196602396830'; 
+
 // ฟังก์ชันสำหรับส่งข้อมูลไปหา Discord API
 function apiRequest($url, $post=false, $headers=array()) {
     $ch = curl_init($url);
@@ -28,7 +25,6 @@ function apiRequest($url, $post=false, $headers=array()) {
 
 // 1. ตรวจสอบว่ามีการส่ง Code กลับมาหรือไม่
 if(!isset($_GET['code'])) {
-    // กำหนด Scope: identify (ดูโปรไฟล์) และ guilds.members.read (ดูชื่อเล่นในเซิร์ฟเวอร์)
     $auth_url = "https://discord.com/api/oauth2/authorize?client_id=".$client_id."&redirect_uri=".urlencode($redirect_uri)."&response_type=code&scope=identify+guilds.members.read";
 ?>
     <!DOCTYPE html>
@@ -75,27 +71,24 @@ if(isset($token->error)) {
 }
 
 // 3. ดึงข้อมูลจาก Discord API
-// 3.1 ดึงข้อมูล Profile พื้นฐาน
 $user = apiRequest('https://discord.com/api/users/@me', false, ['Authorization: Bearer ' . $token->access_token]);
-
-// 3.2 ดึงข้อมูลสมาชิกจากเซิร์ฟเวอร์เฉพาะ
 $guild_member = apiRequest("https://discord.com/api/users/@me/guilds/$guild_id/member", false, ['Authorization: Bearer ' . $token->access_token]);
 
 // --- จัดการชื่อที่จะใช้แสดงผล ---
-// ใช้ชื่อในเซิร์ฟเท่านั้น
 if (isset($guild_member->nick) && !empty($guild_member->nick)) {
     $current_name = $guild_member->nick;
 } else {
     die("❌ กรุณาตั้งชื่อใน Discord Server ก่อนเข้าใช้งาน");
 }
-// --- จัดการรูปโปรไฟล์ (รองรับ GIF) ---
-$current_avatar = "https://cdn.discordapp.com/embed/avatars/0.png"; // รูปพื้นฐาน
+
+// --- จัดการรูปโปรไฟล์ ---
+$current_avatar = "https://cdn.discordapp.com/embed/avatars/0.png";
 if (isset($user->id) && isset($user->avatar)) {
     $ext = (strpos($user->avatar, 'a_') === 0) ? 'gif' : 'png';
     $current_avatar = "https://cdn.discordapp.com/avatars/{$user->id}/{$user->avatar}.{$ext}";
 }
 
-// 4. บันทึกหรืออัปเดตข้อมูลลง Database ทันที
+// 4. บันทึกหรืออัปเดตข้อมูลลง Database
 $stmt = $conn->prepare("INSERT INTO users (user_id, user_name, avatar) 
                         VALUES (?, ?, ?) 
                         ON DUPLICATE KEY UPDATE 
@@ -103,13 +96,13 @@ $stmt = $conn->prepare("INSERT INTO users (user_id, user_name, avatar)
                         avatar = VALUES(avatar)");
 $stmt->execute([$user->id, $current_name, $current_avatar]);
 
-// 5. บันทึกข้อมูลลง Session เพื่อใช้ในหน้าอื่นๆ
+// 5. บันทึกข้อมูลลง Session
 $_SESSION['user_id']   = $user->id;
 $_SESSION['user_name'] = $current_name;
 $_SESSION['avatar']    = $current_avatar;
 $_SESSION['access_token'] = $token->access_token;
 
-// 6. ส่งไปหน้า Dashboard หลัก
+// 6. ส่งไปหน้า Dashboard
 header('Location: index.php');
 exit();
 ?>
