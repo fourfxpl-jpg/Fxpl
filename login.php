@@ -3,7 +3,7 @@ session_start(); // ← เพิ่มบรรทัดนี้
 include 'db.php';
 // --- ข้อมูลจาก Discord Developer Portal ---
 // 1. ตรวจสอบว่า Client ID ตรงกับในหน้าเว็บ Discord หรือไม่
-$client_id     = '1490948398889828362';
+$client_id = '1490948398889828362';
 
 // 2. แนะนำให้กด "Reset Secret" ใน Discord Portal แล้วเอารหัสใหม่มาใส่ตรงนี้
 $client_secret = 'h1CQbm4H6tTP_8QC4vpZtSXQQTVIM4P-'; 
