@@ -1,26 +1,19 @@
-FROM ubuntu:22.04
+FROM php:8.2-apache
 
-ENV DEBIAN_FRONTEND=noninteractive
+# ติดตั้ง extension ที่จำเป็น
+RUN docker-php-ext-install pdo pdo_mysql
 
-RUN apt-get update && apt-get install -y \
-    apache2 \
-    php8.1 \
-    libapache2-mod-php8.1 \
-    php8.1-mysql \
-    php8.1-curl \
-    php8.1-mbstring \
-    && a2enmod rewrite \
-    && rm -rf /var/lib/apt/lists/*
+# เปิด mod_rewrite
+RUN a2enmod rewrite
 
-RUN rm -f /var/www/html/index.html
-
+# Copy โค้ดทั้งหมด
 COPY . /var/www/html/
 
-RUN chown -R www-data:www-data /var/www/html
-
+# Copy Apache config
 COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
 
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+# ตั้ง permission
+RUN chown -R www-data:www-data /var/www/html
 
-CMD ["/start.sh"]
+# รัน start.sh ของคุณ
+CMD ["bash", "start.sh"]
