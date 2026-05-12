@@ -3,8 +3,8 @@ session_start();
 include 'db.php';
 
 // --- ข้อมูลจาก Discord Developer Portal ---
-$client_id     = '1491008763581304852';
-$client_secret = getenv('DISCORD_CLIENT_SECRET') ?: 'h1CQbm4H6tTP_8QC4vpZtSXQQTVIM4P-'; 
+$client_id     = '1503820053315850320';
+$client_secret = getenv('DISCORD_CLIENT_SECRET') ?: 'FSsgbR2jhqGWZQ07PLE6SqK0RQGGgKYh'; 
 
 // ✅ บังคับใช้ https เสมอ (แก้ปัญหา Render ใช้ http)
 $redirect_uri = 'https://' . $_SERVER['HTTP_HOST'] . '/login.php';
