@@ -9,7 +9,7 @@ $client_id     = '1490948398889828362';
 $client_secret = 'h1CQbm4H6tTP_8QC4vpZtSXQQTVIM4P-'; 
 
 // 3. แก้บรรทัดนี้ให้ตรงกับ Domain ที่คุณใช้อยู่ (fxpl-production)
-$redirect_uri = 'https://fxpl.onrender.com/login.php';
+$redirect_uri = 'https://fxpl-q7ii.onrender.com/login.php';
 
 $guild_id      = '1462409196602396830'; 
 // ฟังก์ชันสำหรับส่งข้อมูลไปหา Discord API
