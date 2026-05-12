@@ -1,14 +1,15 @@
 <?php
-session_start(); // ← เพิ่มบรรทัดนี้
+session_start();
 include 'db.php';
+
 // --- ข้อมูลจาก Discord Developer Portal ---
-// 1. ตรวจสอบว่า Client ID ตรงกับในหน้าเว็บ Discord หรือไม่
+// ใช้ Client ID จาก Discord Portal จริงๆ
 $client_id     = '1491008763581304852';
 
-// 2. แนะนำให้กด "Reset Secret" ใน Discord Portal แล้วเอารหัสใหม่มาใส่ตรงนี้
-$client_secret = 'h1CQbm4H6tTP_8QC4vpZtSXQQTVIM4P-'; 
+// ⚠️ ควรเก็บ Client Secret ใน Environment Variable ไม่ใส่ตรงนี้
+$client_secret = getenv('DISCORD_CLIENT_SECRET') ?: 'h1CQbm4H6tTP_8QC4vpZtSXQQTVIM4P-'; 
 
-// 3. แก้บรรทัดนี้ให้ตรงกับ Domain ที่คุณใช้อยู่ (fxpl-production)
+// ใช้ URL อัตโนมัติ ไม่ต้องแก้ทุกครั้ง
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $redirect_uri = $protocol . $_SERVER['HTTP_HOST'] . '/login.php';
 
