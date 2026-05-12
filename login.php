@@ -62,6 +62,8 @@ $token_data = apiRequest('https://discord.com/api/oauth2/token', [
     "code" => $_GET['code'],
     "redirect_uri" => $redirect_uri
 ]);
+// หลังบรรทัด $token_data = apiRequest(...) 
+die("<pre>" . print_r($token_data, true) . "</pre>");
 
 // --- จุดแก้บัคหลัก: ตรวจสอบว่าได้ Token จริงหรือไม่ก่อนไปต่อ ---
 if(!isset($token_data->access_token)) {
