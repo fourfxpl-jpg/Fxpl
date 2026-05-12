@@ -56,17 +56,6 @@ if(!isset($_GET['code'])) {
     exit();
 }
 
-// 2. แลกเปลี่ยน Code เป็น Access Token
-$token_data = apiRequest('https://discord.com/api/oauth2/token', [
-    "client_id" => $client_id,
-    "client_secret" => $client_secret,
-    "grant_type" => "authorization_code",
-    "code" => $_GET['code'],
-    "redirect_uri" => $redirect_uri
-]);
-// หลังบรรทัด $token_data = apiRequest(...) 
-die("<pre>" . print_r($token_data, true) . "</pre>");
-
 // --- จุดแก้บัคหลัก: ตรวจสอบว่าได้ Token จริงหรือไม่ก่อนไปต่อ ---
 if(!isset($token_data->access_token)) {
     die("Error: " . ($token_data->error_description ?? "Could not get access token"));
