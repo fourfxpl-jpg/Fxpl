@@ -4,7 +4,7 @@ include 'db.php';
 
 // --- ข้อมูลจาก Discord Developer Portal ---
 $client_id     = '1490948398889828362';
-$client_secret = 'h1CQbm4H6tTP_8QC4vpZtSXQQTVIM4P-'; 
+$client_secret = 'D_KEkaGklLFjQRWN4DwLzKP9FKpJzHXl'; 
 $redirect_uri  = 'https://fxpl-q71i.onrender.com/login.php';
 $guild_id      = '1462409196602396830'; 
 
