@@ -1,27 +1,26 @@
 <?php
-ini_set('display_errors', 0); // ปิดในโปรดักชั่น
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 session_start();
 include 'db.php';
 
-// ใช้ environment variables แทน hardcoded values
-// หรือถ้ายังไม่ใช้ .env ให้ใส่ค่าในที่นี้ (แล้วนำไปเก็บใน .env ทีหลัง)
 $client_id     = getenv('DISCORD_CLIENT_ID') ?: '1490948398889828362';
 $client_secret = getenv('DISCORD_CLIENT_SECRET') ?: 'D_KEkaGklLFjQRWN4DwLzKP9FKpJzHXl';
 $redirect_uri  = getenv('DISCORD_REDIRECT_URI') ?: 'https://fxpl-q71i.onrender.com/login.php';
 $guild_id      = getenv('DISCORD_GUILD_ID') ?: '1462409196602396830';
 
 function apiRequest($url, $post = null, $headers = []) {
-    $maxRetries = 3;
-    $retryDelay = 1; // seconds
+    $maxRetries = 5;
+    $retryDelay = 2; // เริ่มต้น 2 วินาที
     
     for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // ✅ เปิด SSL verification
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_HEADER, true); // ✅ รับ headers
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 
         if ($post !== null) {
             curl_setopt($ch, CURLOPT_POST, true);
@@ -43,46 +42,78 @@ function apiRequest($url, $post = null, $headers = []) {
         // ✅ ตรวจสอบ Rate Limit Headers
         $rateLimitRemaining = 0;
         $rateLimitReset = 0;
-        if (preg_match('/x-ratelimit-remaining: (\d+)/i', $headerText, $m)) {
+        $retryAfter = 0;
+
+        if (preg_match('/x-ratelimit-remaining:\s*(\d+)/i', $headerText, $m)) {
             $rateLimitRemaining = (int)$m[1];
         }
-        if (preg_match('/x-ratelimit-reset: (\d+)/i', $headerText, $m)) {
+        if (preg_match('/x-ratelimit-reset:\s*(\d+\.?\d*)/i', $headerText, $m)) {
             $rateLimitReset = (int)$m[1];
+        }
+        if (preg_match('/retry-after:\s*(\d+\.?\d*)/i', $headerText, $m)) {
+            $retryAfter = (int)ceil($m[1]);
         }
 
         // ✅ Handle 429 (Rate Limit)
         if ($httpCode === 429) {
+            $waitTime = max($retryAfter, 5); // อย่างน้อย 5 วินาที
+            
             if ($attempt < $maxRetries - 1) {
+                error_log("Rate limited on attempt " . ($attempt + 1) . ". Waiting $waitTime seconds...");
+                sleep($waitTime);
+                $retryDelay = $waitTime;
+                continue;
+            } else {
+                die("❌ Discord API Rate Limited หลังจากลองหลายครั้ง - กรุณาลองใหม่ในอีก 5 นาที");
+            }
+        }
+
+        // ✅ Handle Connection Timeout และ Temp Errors
+        if ($httpCode >= 500 || $error) {
+            if ($attempt < $maxRetries - 1) {
+                error_log("Server error $httpCode or connection error. Retrying in " . $retryDelay . " seconds...");
                 sleep($retryDelay);
                 $retryDelay *= 2; // Exponential backoff
                 continue;
             }
-            die("❌ Discord API Rate Limited - กรุณาลองใหม่ในอีกสักครู่ (Error 429)");
         }
 
-        // ✅ ถ้า requests เกือบหมด - sleep ไปเรื่อยๆ
-        if ($rateLimitRemaining === 0 && $rateLimitReset > 0) {
-            $sleepTime = max(0, $rateLimitReset - time() + 1);
-            if ($sleepTime > 0 && $attempt < $maxRetries - 1) {
-                sleep(min($sleepTime, 5)); // สูงสุด 5 วินาที
+        // ✅ หากใกล้จะหมด rate limit - sleep
+        if ($rateLimitRemaining <= 1 && $rateLimitReset > 0) {
+            $sleepTime = max(1, $rateLimitReset - time() + 1);
+            if ($sleepTime > 0 && $sleepTime <= 10) {
+                error_log("Rate limit nearly exhausted. Sleeping $sleepTime seconds...");
+                sleep($sleepTime);
                 continue;
             }
         }
 
-        // ✅ Handle 5xx errors (Server error - retry)
-        if ($httpCode >= 500 && $attempt < $maxRetries - 1) {
-            sleep($retryDelay);
-            $retryDelay *= 2;
-            continue;
+        // ✅ Check for errors
+        if ($httpCode >= 400) {
+            // อย่าแสดงข้อมูล API response ให้ผู้ใช้เห็น
+            error_log("Discord API Error - HTTP $httpCode: " . substr($body, 0, 200));
+            
+            if ($httpCode === 401 || $httpCode === 403) {
+                die("❌ Unauthorized - กรุณาลงชื่อเข้าสู่ระบบใหม่");
+            }
+            
+            if ($attempt < $maxRetries - 1 && $httpCode >= 500) {
+                sleep($retryDelay);
+                $retryDelay *= 2;
+                continue;
+            }
+            
+            die("❌ Discord API Error ($httpCode) - กรุณาลองใหม่");
         }
 
-        // Other errors
-        if ($httpCode >= 400 || $error) {
-            echo "<h2>❌ Discord API Error</h2>";
-            echo "<strong>HTTP Code:</strong> $httpCode<br>";
-            if ($error) echo "<strong>CURL Error:</strong> " . htmlspecialchars($error) . "<br>";
-            echo "<strong>Response:</strong><pre>" . htmlspecialchars($body) . "</pre>";
-            exit();
+        if ($error) {
+            error_log("CURL Error: $error");
+            if ($attempt < $maxRetries - 1) {
+                sleep($retryDelay);
+                $retryDelay *= 2;
+                continue;
+            }
+            die("❌ Connection error - กรุณาลองใหม่");
         }
 
         $data = json_decode($body);
@@ -94,7 +125,6 @@ function apiRequest($url, $post = null, $headers = []) {
 
 // ==================== หน้า Login ====================
 if (!isset($_GET['code'])) {
-    // ✅ CSRF Protection: สร้าง state parameter
     if (!isset($_SESSION['oauth_state'])) {
         $_SESSION['oauth_state'] = bin2hex(random_bytes(16));
     }
@@ -104,7 +134,7 @@ if (!isset($_GET['code'])) {
         'redirect_uri'  => $redirect_uri,
         'response_type' => 'code',
         'scope'         => 'identify guilds.members.read',
-        'state'         => $_SESSION['oauth_state'] // ✅ เพิ่ม state
+        'state'         => $_SESSION['oauth_state']
     ]);
 ?>
 <!DOCTYPE html>
@@ -113,15 +143,48 @@ if (!isset($_GET['code'])) {
     <meta charset="UTF-8">
     <title>Police All Star - Login</title>
     <style>
-        body { font-family: 'Kanit', sans-serif; background:#070b1a; color:white; text-align:center; padding-top:120px; }
-        .btn { background:#5865F2; color:white; padding:16px 36px; border-radius:12px; text-decoration:none; font-size:1.3rem; display:inline-flex; align-items:center; gap:12px; }
-        .btn:hover { background:#4752c4; transform:scale(1.05); }
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background:#070b1a; 
+            color:white; 
+            text-align:center; 
+            padding-top:120px; 
+        }
+        .btn { 
+            background:#5865F2; 
+            color:white; 
+            padding:16px 36px; 
+            border-radius:12px; 
+            text-decoration:none; 
+            font-size:1.3rem; 
+            display:inline-flex; 
+            align-items:center; 
+            gap:12px; 
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover { 
+            background:#4752c4; 
+            transform:scale(1.05); 
+        }
+        .loading {
+            display: none;
+            color: #888;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
     <h1>Police All Star PD</h1>
     <p>Y Police All Star Y</p>
-    <a href="<?= htmlspecialchars($auth_url) ?>" class="btn">🔵 เข้าสู่ระบบด้วย Discord</a>
+    <a href="<?= htmlspecialchars($auth_url) ?>" class="btn" onclick="showLoading()">🔵 เข้าสู่ระบบด้วย Discord</a>
+    <div class="loading" id="loading">กำลังเชื่อมต่อ Discord...</div>
+    <script>
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
 <?php exit(); } 
@@ -154,15 +217,17 @@ $access_token = $token_data->access_token;
 
 // ดึงข้อมูลผู้ใช้
 $user = apiRequest('https://discord.com/api/users/@me', null, ['Authorization: Bearer ' . $access_token]);
-$guild_member = apiRequest("https://discord.com/api/users/@me/guilds/$guild_id/member", null, ['Authorization: Bearer ' . $access_token]);
 
 if (!isset($user->id)) {
     die("❌ ไม่สามารถดึงข้อมูลผู้ใช้จาก Discord ได้");
 }
 
+// ดึง guild member info
+$guild_member = apiRequest("https://discord.com/api/users/@me/guilds/$guild_id/member", null, ['Authorization: Bearer ' . $access_token]);
+
 // จัดการชื่อและรูป
 $current_name = $guild_member->nick ?? $user->global_name ?? $user->username ?? 'Unknown';
-$current_name = filter_var($current_name, FILTER_SANITIZE_STRING); // ✅ Sanitize
+$current_name = filter_var($current_name, FILTER_SANITIZE_STRING);
 
 $current_avatar = "https://cdn.discordapp.com/embed/avatars/0.png";
 if (!empty($user->avatar)) {
@@ -178,12 +243,10 @@ $stmt = $conn->prepare("INSERT INTO users (user_id, user_name, avatar)
                         avatar = VALUES(avatar)");
 $stmt->execute([$user->id, $current_name, $current_avatar]);
 
-// ✅ Session management - ไม่เก็บ access token ใน $_SESSION
+// Session management
 $_SESSION['user_id']   = $user->id;
 $_SESSION['user_name'] = $current_name;
 $_SESSION['avatar']    = $current_avatar;
-// ไม่เก็บ access token ใน session (security risk)
-// ถ้าต้องใช้ให้เก็บใน database หรือ server-side storage
 
 header('Location: index.php');
 exit();
