@@ -4,10 +4,10 @@ error_reporting(E_ALL);
 session_start();
 include 'db.php';
 
-$client_id     = getenv('DISCORD_CLIENT_ID') ?: '1490948398889828362';
-$client_secret = getenv('DISCORD_CLIENT_SECRET') ?: 'D_KEkaGklLFjQRWN4DwLzKP9FKpJzHXl';
-$redirect_uri  = getenv('DISCORD_REDIRECT_URI') ?: 'https://c80a966e-c31b-4f1f-979c-caba6d4b8184-00-1ei7y7yia7xmz.pike.replit.dev/login.php';
-$guild_id      = getenv('DISCORD_GUILD_ID') ?: '1462409196602396830';
+$client_id     = '1490948398889828362';
+$client_secret = 'D_KEkaGklLFjQRWN4DwLzKP9FKpJzHXl';
+$redirect_uri  = 'https://c80a966e-c31b-4f1f-979c-caba6d4b8184-00-1ei7y7yia7xmz.pike.replit.dev/login.php';
+$guild_id      = '1462409196602396830';
 
 // ✅ ใช้ proxy เพื่อหลีก rate limit
 $proxy_list = [
