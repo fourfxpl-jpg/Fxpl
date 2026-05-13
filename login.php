@@ -26,12 +26,25 @@ function apiRequest($url, $post = null, $headers = []) {
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error    = curl_error($ch);
     curl_close($ch);
 
-    return json_decode($response);
+    $data = json_decode($response);
+
+    // Debug Output
+    if ($httpCode >= 400 || $error || !$data || !isset($data->access_token)) {
+        echo "<h2>❌ Discord API Error</h2>";
+        echo "<strong>HTTP Code:</strong> $httpCode<br>";
+        echo "<strong>CURL Error:</strong> " . htmlspecialchars($error) . "<br>";
+        echo "<strong>Response:</strong><pre>" . htmlspecialchars($response) . "</pre>";
+        echo "<strong>Decoded Data:</strong><pre>" . htmlspecialchars(print_r($data, true)) . "</pre>";
+        exit();
+    }
+
+    return $data;
 }
 
-// ==================== Login Page ====================
+// ==================== หน้า Login ====================
 if (!isset($_GET['code'])) {
     $auth_url = "https://discord.com/api/oauth2/authorize?" . http_build_query([
         'client_id'     => $client_id,
@@ -45,28 +58,19 @@ if (!isset($_GET['code'])) {
 <head>
     <meta charset="UTF-8">
     <title>Police All Star - Login</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { display:flex; align-items:center; justify-content:center; height:100vh; background:#070b1a; margin:0; font-family:'Kanit',sans-serif; }
-        .login-box { max-width:420px; padding:50px 40px; border-radius:20px; background:#161925; text-align:center; border:1px solid rgba(255,255,255,0.1); }
-        .btn-discord { background:#5865F2; color:white; padding:14px 32px; border-radius:12px; text-decoration:none; display:inline-flex; align-items:center; gap:12px; font-size:1.1rem; font-weight:bold; }
-        .btn-discord:hover { background:#4752c4; transform:scale(1.05); }
+        body { font-family: 'Kanit', sans-serif; background:#070b1a; color:white; text-align:center; padding-top:100px; }
+        .btn { background:#5865F2; color:white; padding:15px 30px; border-radius:12px; text-decoration:none; font-size:1.2rem; }
     </style>
 </head>
 <body>
-    <div class="login-box">
-        <h1>Police All Star PD</h1>
-        <p>Y Police All Star Y</p>
-        <a href="<?= $auth_url ?>" class="btn-discord">
-            <i class="fab fa-discord" style="font-size:1.8rem;"></i> เข้าสู่ระบบด้วย Discord
-        </a>
-    </div>
+    <h1>Police All Star PD</h1>
+    <a href="<?= $auth_url ?>" class="btn">🔵 เข้าสู่ระบบด้วย Discord</a>
 </body>
 </html>
 <?php exit(); } 
 
-// ==================== Callback ====================
+// ==================== Callback (สำคัญ) ====================
 $token_data = apiRequest('https://discord.com/api/oauth2/token', [
     "client_id"     => $client_id,
     "client_secret" => $client_secret,
@@ -75,13 +79,10 @@ $token_data = apiRequest('https://discord.com/api/oauth2/token', [
     "redirect_uri"  => $redirect_uri
 ]);
 
-if (!isset($token_data->access_token)) {
-    die("<h2>❌ Error รับ Token ไม่ได้</h2><pre>" . htmlspecialchars(print_r($token_data, true)) . "</pre>");
-}
-
+// ถ้าผ่านตรงนี้ แสดงว่าได้ Token แล้ว
 $access_token = $token_data->access_token;
 
-// ดึงข้อมูลผู้ใช้
+// ดึงข้อมูลต่อ...
 $user = apiRequest('https://discord.com/api/users/@me', null, ['Authorization: Bearer ' . $access_token]);
 $guild_member = apiRequest("https://discord.com/api/users/@me/guilds/$guild_id/member", null, ['Authorization: Bearer ' . $access_token]);
 
@@ -89,7 +90,7 @@ if (!isset($user->id)) {
     die("❌ ไม่สามารถดึงข้อมูลผู้ใช้ได้");
 }
 
-$current_name = $guild_member->nick ?? $user->global_name ?? $user->username ?? 'Unknown Player';
+$current_name = $guild_member->nick ?? $user->global_name ?? $user->username ?? 'Unknown';
 
 $current_avatar = "https://cdn.discordapp.com/embed/avatars/0.png";
 if (!empty($user->avatar)) {
@@ -97,8 +98,10 @@ if (!empty($user->avatar)) {
     $current_avatar = "https://cdn.discordapp.com/avatars/{$user->id}/{$user->avatar}.{$ext}";
 }
 
-// บันทึก DB + Session
-$stmt = $conn->prepare("INSERT INTO users (user_id, user_name, avatar) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE user_name=VALUES(user_name), avatar=VALUES(avatar)");
+// บันทึกข้อมูล
+$stmt = $conn->prepare("INSERT INTO users (user_id, user_name, avatar) 
+                        VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE 
+                        user_name = VALUES(user_name), avatar = VALUES(avatar)");
 $stmt->execute([$user->id, $current_name, $current_avatar]);
 
 $_SESSION['user_id']      = $user->id;
