@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-14T12:00:00.000Z",
+  "title": "Design System: POLICE ALL STAR PD",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Police Blue", "canonical": "oklch(60% 0.18 250)" },
+      "accent": { "role": "accent", "displayName": "Alert Orange", "canonical": "oklch(70% 0.15 45)" },
+      "neutral-bg": { "role": "neutral", "displayName": "Deep Midnight", "canonical": "oklch(15% 0.02 260)" },
+      "neutral-surface": { "role": "neutral", "displayName": "Terminal Surface", "canonical": "oklch(20% 0.02 260)" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Terminal Display", "purpose": "Strategic headers and ID titles." },
+      "body": { "displayName": "Officer Sans", "purpose": "Logs, reports, and standard UI text." }
+    },
+    "shadows": [
+      { "name": "hud-glow", "value": "0 12px 36px oklch(0% 0 0 / 0.4)", "purpose": "Depth for floating panels." }
+    ],
+    "motion": [
+      { "name": "pulse", "value": "pulse 2s infinite", "purpose": "Active status indicators." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "status-badge",
+      "description": "Indicates current officer status.",
+      "html": "<div class=\"ds-status-badge\">ON-DUTY</div>",
+      "css": ".ds-status-badge { background: oklch(75% 0.15 150); color: #fff; padding: 10px 24px; border-radius: 12px; font-weight: 800; font-family: 'Rajdhani', sans-serif; display: inline-flex; align-items: center; gap: 10px; }"
+    },
+    {
+      "name": "Tactical Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Standard container for terminal content.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">SYSTEM LOG</h3><p>Authorized access only.</p></div>",
+      "css": ".ds-card { background: oklch(20% 0.02 260 / 0.85); backdrop-filter: blur(12px); border: 1px solid oklch(100% 0 0 / 0.06); border-radius: 18px; padding: 32px; box-shadow: 0 12px 36px oklch(0% 0 0 / 0.4); } .ds-card-title { font-family: 'Rajdhani', sans-serif; text-transform: uppercase; margin-bottom: 12px; color: oklch(60% 0.18 250); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Tactical Terminal HUD",
+    "overview": "The visual system is designed to evoke the high-stakes, high-precision environment of a modern police command center. It prioritizes data density and immediate status recognition.",
+    "keyCharacteristics": ["High-contrast 'Tactical Dark' theme", "Technical uppercase typography", "Semi-transparent surfaces", "Purposeful status indicators"],
+    "rules": [
+      { "name": "The 10% Protocol", "body": "The primary accent is used on ≤10% of any given screen.", "section": "colors" },
+      { "name": "The Glass Rule", "body": "Surfaces above the base canvas must use alpha 0.85 and backdrop-blur.", "section": "elevation" }
+    ],
+    "dos": ["Do use uppercase Rajdhani for all functional headers", "Do utilize backdrop-filter on panels"],
+    "donts": ["Don't use soft shadows or pastel colors", "Don't use side-stripe borders"]
+  }
+}
