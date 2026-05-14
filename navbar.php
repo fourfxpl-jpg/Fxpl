@@ -18,28 +18,27 @@ if (isset($_SESSION['user_id'])) {
 ?>
 <nav class="navbar">
     <div class="nav-left">
-        <div class="user-info" style="display:flex;align-items:center;gap:10px;">
+        <div class="user-info" style="display:flex;align-items:center;gap:12px;">
             <?php if(isset($_SESSION['avatar'])): ?>
-                <img src="<?= $_SESSION['avatar'] ?>" style="width:35px;height:35px;border-radius:50%;border:1px solid var(--primary);">
+                <img src="<?= $_SESSION['avatar'] ?>" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--primary);box-shadow:var(--shadow-sm);">
             <?php endif; ?>
             <div>
                 <b><?= htmlspecialchars($user_name) ?></b>
-                <span style="font-size:11px;color:var(--primary);">ID : <?= $_SESSION['user_id'] ?? '0' ?></span>
+                <span style="font-size:11px;color:var(--primary);font-weight:700;letter-spacing:1px;">ID: <?= $_SESSION['user_id'] ?? '0' ?></span>
             </div>
         </div>
     </div>
 
     <div class="nav-center">
-        <a href="index.php" class="<?= ($current_page=='index.php')?'active':'' ?>">หน้าหลัก</a>
-        <a href="rules.php" class="<?= ($current_page=='rules.php')?'active':'' ?>">กฎระเบียบ</a>
-        <a href="duty.php" class="<?= ($current_page=='duty.php')?'active':'' ?>">เข้าเวร</a>
-        <a href="cases.php" class="<?= ($current_page=='cases.php')?'active':'' ?>">ลงเคส</a>
-        <a href="stats.php" class="<?= ($current_page=='stats.php')?'active':'' ?>">สถิติ</a>
+        <a href="index.php" class="<?= ($current_page=='index.php')?'active':'' ?>">DASHBOARD</a>
+        <a href="rules.php" class="<?= ($current_page=='rules.php')?'active':'' ?>">PROTOCOLS</a>
+        <a href="duty.php" class="<?= ($current_page=='duty.php')?'active':'' ?>">ON-DUTY</a>
+        <a href="cases.php" class="<?= ($current_page=='cases.php')?'active':'' ?>">INCIDENTS</a>
+        <a href="stats.php" class="<?= ($current_page=='stats.php')?'active':'' ?>">ANALYTICS</a>
     </div>
 
-    <div class="nav-right">
-        <button class="theme-toggle">🌙</button>
-        <button onclick="showLogoutModal()" class="logout-btn-nav">ออกจากระบบ</button>
+    <div class="nav-right" style="display:flex;align-items:center;gap:12px;">
+        <button onclick="showLogoutModal()" class="btn" style="background:var(--danger);color:#fff;padding:8px 16px;font-size:12px;">EXIT SYSTEM</button>
     </div>
 </nav>
 
