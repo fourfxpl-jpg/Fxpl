@@ -34,7 +34,7 @@ if (isset($_SESSION['user_id'])) {
         <a href="rules.php" class="<?= ($current_page=='rules.php')?'active':'' ?>">PROTOCOLS</a>
         <a href="duty.php" class="<?= ($current_page=='duty.php')?'active':'' ?>">ON-DUTY</a>
         <a href="cases.php" class="<?= ($current_page=='cases.php')?'active':'' ?>">INCIDENTS</a>
-        <a href="stats.php" class="<?= ($current_page=='stats.php')?'active':'' ?>">ANALYTICS</a>
+        <a href="stats_weekly.php" class="<?= ($current_page=='stats_weekly.php')?'active':'' ?>">ANALYTICS</a>
     </div>
 
     <div class="nav-right" style="display:flex;align-items:center;gap:12px;">
