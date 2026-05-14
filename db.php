@@ -1,9 +1,9 @@
 <?php
-$host     = getenv('MYSQL_ADDON_HOST')     ?: 'localhost';
-$db_name  = getenv('MYSQL_ADDON_DB')       ?: 'mydb';
-$username = getenv('MYSQL_ADDON_USER')     ?: 'root';
-$password = getenv('MYSQL_ADDON_PASSWORD') ?: '';
-$port     = getenv('MYSQL_ADDON_PORT')     ?: '3306';
+$host     = 'sql12.freesqldatabase.com';
+$db_name  = 'sql12826794';
+$username = 'sql12826794';
+$password = 'zwrjS4a8DvPort';
+$port     = '3306';
 
 try {
     $conn = new PDO(
